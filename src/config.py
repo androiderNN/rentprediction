@@ -12,9 +12,9 @@ df_dir = os.path.join(data_dir, 'df')
 raw_train = os.path.join(raw_dir, 'train.csv')
 raw_test = os.path.join(raw_dir, 'test.csv')
 
-col_train_df = os.path.join(df_dir, 'colprocessed_train.pkl')
-col_test_df = os.path.join(df_dir, 'colprocessed_test.pkl')
-col_cols = os.path.join(df_dir, 'colprocessed_cols.pkl')
+tmp_train_df = os.path.join(df_dir, 'tmp_train.pkl')
+tmp_test_df = os.path.join(df_dir, 'tmp_test.pkl')
+df_cols = os.path.join(df_dir, 'df_cols.pkl')
 
 target_name = 'money_room'
 # ignore_cols = [
@@ -35,4 +35,5 @@ ignore_cols = \
     'money_shuuzenkikin', 'money_rimawari_now', 'reform_wet_area_date',
     'reform_date', 'money_shuuzen', 'land_mochibun_a', 'land_mochibun_b',
     'reform_interior_date', 'total_floor_area', 'snapshot_land_shidou',
-    'snapshot_land_area', 'building_area']   # データ数10000未満の列を無視
+    'snapshot_land_area', 'building_area'] + \
+    ['lat', 'lon']  # データ数の少ない列、他に類似の特徴量が存在する列

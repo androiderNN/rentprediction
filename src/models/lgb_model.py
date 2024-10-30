@@ -34,7 +34,7 @@ class modeler_lgb():
 def lgb_supplements(modeler):
     '''
     feature importanceのdf作成'''
-    cols = pickle.load(open(config.col_cols, 'rb')) # 列名
+    cols = pickle.load(open(config.df_cols, 'rb')) # 列名
     fi = modeler.model.feature_importance(importance_type='gain')   # 重要度
 
     fi = pd.DataFrame({'column': cols, 'importance': fi})
