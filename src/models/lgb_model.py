@@ -23,14 +23,14 @@ class modeler_lgb():
             num_boost_round=100,
             valid_sets=es_lgb,
             valid_names='estop',
-            callbacks=[lgb.early_stopping(stopping_rounds=2, verbose=True)]
+            callbacks=[lgb.early_stopping(stopping_rounds=3, verbose=True)]
         )
 
     def predict(self, x):
         return self.model.predict(x)
 
-if __name__ == '__main__':    
-    rand = 1
+if __name__ == '__main__':
+    rand = 0
 
     model_params = {
         'object': 'regression',
@@ -48,6 +48,8 @@ if __name__ == '__main__':
     params = {
         'trainer_params': trainer_params,
         'use_cv': False,
+        'verbose': True,
+        'model_type': 'lgb'
     }
 
     rr = base_model.rentregressor(params)

@@ -31,7 +31,7 @@ class trainer_holdout():
 
     def train(self, tr_x, tr_y):
         # データ分割
-        tr_x, es_x, tr_y, es_y = train_test_split(tr_x, tr_y, test_size=0.1, random_state=self.rand)
+        tr_x, es_x, tr_y, es_y = train_test_split(tr_x, tr_y, test_size=0.2, random_state=self.rand)
 
         # 学習
         self.modeler = self.modeler_class(self.modeler_params)
@@ -52,15 +52,30 @@ class trainer_holdout():
 
 class rentregressor():
     def __init__(self, params):
+        '''
+        params = {
+            'trainer_params': dict,
+            'use_cv': bool,
+            'verbose': bool,
+            'model_type': str,
+        }'''
         params['trainer_params']['score_fn'] = root_mean_squared_error
 
         if params['use_cv']:
             pass
         else:
             self.trainer = trainer_holdout(params['trainer_params'])
+        
+        self.verbose = params['verbose']
+        self.model_type = params['model_type']
+        self.exdir = os.path.join(config.ex_dir, time+'_'+self.model_type)
 
-    def export(self, test_pred):
-        pass
+    def export(self, index, test_pred):
+        df = pd.DataFrame({
+            'index': index,
+            'money_room': test_pred
+        })
+        df.to_csv(os.path.join(self.exdir, 'submission.csv'), index=False, header=False)
 
     def main(self):
         # データのロードと分割
@@ -73,5 +88,12 @@ class rentregressor():
         # 学習
         self.trainer.train(tr_x, tr_y)
 
+        # 予測
         test_pred = self.trainer.predict(test_df.drop(columns='index'))
-        self.export(test_pred)
+
+        # 出力
+        if self.verbose:
+            if input('出力しますか？(y/n)') == 'y':
+                os.mkdir(self.exdir)
+                self.export(test_df['index'], test_pred)
+                print('export succeed')
