@@ -1,0 +1,6 @@
+data
+export
+
+src/__pycache__
+src/*ipynb
+src/*/__pycache__
