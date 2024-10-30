@@ -32,6 +32,8 @@ class trainer_holdout():
         self.modeler_params = params['modeler_params']
         self.score_fn = params['score_fn']
 
+        self.supplements_fn = params['supplements_fn']
+
         self.modeler = None
 
     def train(self, tr_x, tr_y):
@@ -56,18 +58,23 @@ class trainer_holdout():
     def predict(self, x):
         return self.modeler.predict(x)
 
+    def get_supplements(self):
+        return self.supplements_fn(self.modeler)
+
 class trainer_crossvalidation():
     def __init__(self, params):
         '''
         hold-outでの学習と予測を行うクラス
         params: dict
-            'rand', 'modeler_class', 'modeler_params', 'score_fn'をkeyにもつ
+            'rand', 'modeler_class', 'modeler_params', 'score_fn', 'supplements_fn'をkeyにもつ
         '''
         self.rand = params['rand']
 
         self.modeler_class = params['modeler_class']
         self.modeler_params = params['modeler_params']
         self.score_fn = params['score_fn']
+
+        self.supplements_fn = params['supplements_fn']
 
         self.modeler_array = list()
 
@@ -116,6 +123,17 @@ class trainer_crossvalidation():
         pred = [modeler.predict(x) for modeler in self.modeler_array]
         pred = np.array(pred).mean(axis=0)
         return pred
+
+    def get_supplements(self):
+        '''
+        補助データを作成する関数'''
+        if self.supplements_fn is None:
+            supp = None
+        else:
+            supp = [self.supplements_fn(modeler) for modeler in self.modeler_array]
+            supp = {k:[s[k] for s in supp] for k in supp[0].keys()}
+
+        return supp
 
 class rentregressor():
     def __init__(self, params):
@@ -167,15 +185,31 @@ class rentregressor():
         # 学習
         self.trainer.train(tr_x, tr_y)
 
-        # 予測
-        test_pred = self.trainer.predict(test_df.drop(columns='index'))
-
-        if self.use_log:
-            test_pred = np.exp(test_pred)
-
         # 出力
         if self.verbose:
-            if input('出力しますか？(y/n)') == 'y':
+            if input('\n出力しますか？(y/n)') == 'y':
                 os.mkdir(self.exdir)
+
+                # 予測
+                train_pred = self.trainer.predict(tr_x)
+                test_pred = self.trainer.predict(test_df.drop(columns='index'))
+
+                if self.use_log:
+                    train_pred = np.exp(train_pred)
+                    test_pred = np.exp(test_pred)
+
                 self.export(test_df['index'], test_pred)
+
+                train_df['pred'] = train_pred
+                test_df['pred'] = test_pred
+
+                train_df.to_csv(os.path.join(self.exdir, 'train_pred.csv'))
+                test_df.to_csv(os.path.join(self.exdir, 'test_pred.csv'))
+
+                # supplements
+                supplements = self.trainer.get_supplements()
+                if supplements is not None:
+                    for k in supplements.keys():
+                        pickle.dump(supplements[k], open(os.path.join(self.exdir, k+'.pkl'), 'wb'))
+
                 print('export succeed')

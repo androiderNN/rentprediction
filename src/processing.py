@@ -22,6 +22,7 @@ def process():
 
     pickle.dump(train_df, open(config.col_train_df, 'wb'))
     pickle.dump(test_df, open(config.col_test_df, 'wb'))
+    pickle.dump([c for c in train_df.columns.tolist() if c!=config.target_name], open(config.col_cols, 'wb'))
     print('succeed')
 
 if __name__ == '__main__':

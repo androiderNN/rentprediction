@@ -14,6 +14,7 @@ raw_test = os.path.join(raw_dir, 'test.csv')
 
 col_train_df = os.path.join(df_dir, 'colprocessed_train.pkl')
 col_test_df = os.path.join(df_dir, 'colprocessed_test.pkl')
+col_cols = os.path.join(df_dir, 'colprocessed_cols.pkl')
 
 target_name = 'money_room'
 # ignore_cols = [
