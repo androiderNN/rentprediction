@@ -1,7 +1,7 @@
 import os, pickle, sys, datetime
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import mean_squared_error
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -50,6 +50,66 @@ class trainer_holdout():
     def predict(self, x):
         return self.modeler.predict(x)
 
+class trainer_crossvalidation():
+    def __init__(self, params):
+        '''
+        hold-outでの学習と予測を行うクラス
+        params: dict
+            'rand', 'modeler_class', 'modeler_params', 'score_fn'をkeyにもつ
+        '''
+        self.rand = params['rand']
+
+        self.modeler_class = params['modeler_class']
+        self.modeler_params = params['modeler_params']
+        self.score_fn = params['score_fn']
+
+        self.modeler_array = list()
+
+    def train(self, x, y):
+        # データ分割
+        train_x, va_x, train_y, va_y = train_test_split(x, y, test_size=0.2, random_state=self.rand)
+
+        kf = KFold(n_splits=4, random_state=self.rand, shuffle=True)
+
+        for i, (tr_idx, es_idx) in enumerate(kf.split(train_x)):
+            print('\nFold', i)
+
+            # 分割
+            tr_x, es_x = train_x.iloc[tr_idx], train_x.iloc[es_idx]
+            tr_y, es_y = train_y.iloc[tr_idx], train_y.iloc[es_idx]
+
+            # 学習
+            modeler = self.modeler_class(self.modeler_params)
+            modeler.train(tr_x, tr_y, es_x, es_y)
+
+            self.modeler_array.append(modeler)
+
+            # 結果表示
+            tr_pred = modeler.predict(tr_x)
+            es_pred = modeler.predict(es_x)
+
+            tr_score = self.score_fn(tr_y, tr_pred)
+            es_score = self.score_fn(es_y, es_pred)
+
+            print(f'train score: {tr_score}')
+            print(f'estop score: {es_score}')
+        
+        # 最終結果
+        train_pred = self.predict(train_x)
+        va_pred = self.predict(va_x)
+
+        train_score = self.score_fn(train_y, train_pred)
+        va_score = self.score_fn(va_y, va_pred)
+
+        print('\nmean score')
+        print(f'train score: {train_score}')
+        print(f'valid score: {va_score}')
+
+    def predict(self, x):
+        pred = [modeler.predict(x) for modeler in self.modeler_array]
+        pred = np.array(pred).mean(axis=0)
+        return pred
+
 class rentregressor():
     def __init__(self, params):
         '''
@@ -62,7 +122,7 @@ class rentregressor():
         params['trainer_params']['score_fn'] = root_mean_squared_error
 
         if params['use_cv']:
-            pass
+            self.trainer = trainer_crossvalidation(params['trainer_params'])
         else:
             self.trainer = trainer_holdout(params['trainer_params'])
         
