@@ -14,6 +14,8 @@ raw_test = os.path.join(raw_dir, 'test.csv')
 
 tmp_train_df = os.path.join(df_dir, 'tmp_train.pkl')
 tmp_test_df = os.path.join(df_dir, 'tmp_test.pkl')
+train_df = os.path.join(df_dir, 'train_df.pkl')
+test_df = os.path.join(df_dir, 'test_df.pkl')
 df_cols = os.path.join(df_dir, 'df_cols.pkl')
 
 target_name = 'money_room'
@@ -36,4 +38,4 @@ ignore_cols = \
     'reform_date', 'money_shuuzen', 'land_mochibun_a', 'land_mochibun_b',
     'reform_interior_date', 'total_floor_area', 'snapshot_land_shidou',
     'snapshot_land_area', 'building_area'] + \
-    ['lat', 'lon']  # データ数の少ない列、他に類似の特徴量が存在する列
+    ['nl', 'el']  # データ数の少ない列、他に類似の特徴量が存在する列

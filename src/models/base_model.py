@@ -173,8 +173,8 @@ class rentregressor():
 
     def main(self):
         # データのロードと分割
-        train_df = pickle.load(open(config.tmp_train_df, 'rb'))
-        test_df = pickle.load(open(config.tmp_test_df, 'rb'))
+        train_df = pickle.load(open(config.train_df, 'rb'))
+        test_df = pickle.load(open(config.test_df, 'rb'))
 
         tr_x = train_df.drop(columns=config.target_name)
         tr_y = train_df[config.target_name]
