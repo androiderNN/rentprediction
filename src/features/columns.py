@@ -2,8 +2,9 @@ import os
 import numpy as np
 import pandas as pd
 
-def col_replace(df):
-    df = df.drop(columns=['building_name_ruby'])
+def drop_cols(df):
+    drop_cols = ['lat', 'lon']
+    df = df.drop(columns=drop_cols)
     return df
 
 def columnprocessor(train, test):
@@ -12,9 +13,9 @@ def columnprocessor(train, test):
     train: pd.DataFrame
     test: pd.DataFrame
 
-    # 列の単純な置き換え
-    train = col_replace(train)
-    test = col_replace(test)
+    # 列の削除
+    train = drop_cols(train)
+    test = drop_cols(test)
 
     # とりあえずdtypeで抽出
     train = train.select_dtypes(include='number')
