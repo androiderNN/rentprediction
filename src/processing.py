@@ -6,14 +6,14 @@ import config
 from features import columns
 
 def process():
-    train_df = pd.read_csv(os.path.join(config.raw_dir, 'train.csv'))
-    test_df = pd.read_csv(os.path.join(config.raw_dir, 'test.csv'))
+    train_df = pd.read_csv(config.raw_train)
+    test_df = pd.read_csv(config.raw_test)
 
     # 列毎の処理
     train_df, test_df = columns.columnprocessor(train_df, test_df)
 
-    pickle.dump(train_df, open(os.path.join(config.df_dir, 'colprocessed_train.pkl'), 'wb'))
-    pickle.dump(test_df, open(os.path.join(config.df_dir, 'colprocessed_test.pkl'), 'wb'))
+    pickle.dump(train_df, open(config.col_train_df, 'wb'))
+    pickle.dump(test_df, open(config.col_test_df, 'wb'))
 
 if __name__ == '__main__':
     process()
