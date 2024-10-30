@@ -14,6 +14,11 @@ def root_mean_squared_error(truth, pred):
     mse = mean_squared_error(truth, pred)
     return mse**0.5
 
+def log_rmse(truth, pred):
+    truth = np.exp(truth)
+    pred = np.exp(pred)
+    return root_mean_squared_error(truth, pred)
+
 class trainer_holdout():
     def __init__(self, params):
         '''
@@ -31,6 +36,7 @@ class trainer_holdout():
 
     def train(self, tr_x, tr_y):
         # データ分割
+        tr_x, tr_y = np.array(tr_x), np.array(tr_y)
         tr_x, es_x, tr_y, es_y = train_test_split(tr_x, tr_y, test_size=0.2, random_state=self.rand)
 
         # 学習
@@ -67,16 +73,17 @@ class trainer_crossvalidation():
 
     def train(self, x, y):
         # データ分割
+        x, y = np.array(x), np.array(y)
         train_x, va_x, train_y, va_y = train_test_split(x, y, test_size=0.2, random_state=self.rand)
 
         kf = KFold(n_splits=4, random_state=self.rand, shuffle=True)
 
-        for i, (tr_idx, es_idx) in enumerate(kf.split(train_x)):
+        for i, (tr_idx, es_idx) in enumerate(kf.split(train_x, )):
             print('\nFold', i)
 
             # 分割
-            tr_x, es_x = train_x.iloc[tr_idx], train_x.iloc[es_idx]
-            tr_y, es_y = train_y.iloc[tr_idx], train_y.iloc[es_idx]
+            tr_x, es_x = train_x[tr_idx], train_x[es_idx]
+            tr_y, es_y = train_y[tr_idx], train_y[es_idx]
 
             # 学習
             modeler = self.modeler_class(self.modeler_params)
@@ -118,14 +125,23 @@ class rentregressor():
             'use_cv': bool,
             'verbose': bool,
             'model_type': str,
+            'use_log': bool,
         }'''
-        params['trainer_params']['score_fn'] = root_mean_squared_error
+        # targetの対数設定
+        self.use_log = params['use_log']
 
+        if self.use_log:
+            params['trainer_params']['score_fn'] = log_rmse
+        else:
+            params['trainer_params']['score_fn'] = root_mean_squared_error
+        
+        # cross validation設定
         if params['use_cv']:
             self.trainer = trainer_crossvalidation(params['trainer_params'])
         else:
             self.trainer = trainer_holdout(params['trainer_params'])
-        
+
+        # 出力関連
         self.verbose = params['verbose']
         self.model_type = params['model_type']
         self.exdir = os.path.join(config.ex_dir, time+'_'+self.model_type)
@@ -145,11 +161,17 @@ class rentregressor():
         tr_x = train_df.drop(columns=config.target_name)
         tr_y = train_df[config.target_name]
 
+        if self.use_log:
+            tr_y = np.log(np.array(tr_y))
+
         # 学習
         self.trainer.train(tr_x, tr_y)
 
         # 予測
         test_pred = self.trainer.predict(test_df.drop(columns='index'))
+
+        if self.use_log:
+            test_pred = np.exp(test_pred)
 
         # 出力
         if self.verbose:
