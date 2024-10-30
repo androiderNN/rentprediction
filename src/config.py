@@ -1,6 +1,8 @@
 import os
 
 home_dir = os.path.dirname(os.getcwd())
+
+ex_dir = os.path.join(home_dir, 'export')
 src_dir = os.path.join(home_dir, 'src')
 
 data_dir = os.path.join(home_dir, 'data')
