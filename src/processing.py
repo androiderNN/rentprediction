@@ -14,8 +14,8 @@ def make_tmpdf():
     一つの関数ですべて処理すると落ちるので、一時ファイルの作成のみに絞った処理を行う
     外れ値の削除と必要な列の抽出を行いtmp_dfとして保存'''
     # 読み込み
-    train_df = pd.read_csv(config.raw_train, usecols=lambda x: x not in config.ignore_cols)
-    test_df = pd.read_csv(config.raw_test, usecols=lambda x: x not in config.ignore_cols)
+    train_df = pd.read_csv(config.raw_train, usecols=lambda x: x not in config.ignore_cols, dtype=config.df_dtype)
+    test_df = pd.read_csv(config.raw_test, usecols=lambda x: x not in config.ignore_cols, dtype=config.df_dtype)
 
     # 異常値の削除
     train_df = train_clearance(train_df)
