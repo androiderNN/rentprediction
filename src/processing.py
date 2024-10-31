@@ -5,8 +5,8 @@ import pandas as pd
 import config
 
 def train_clearance(df):
-    # df = df.loc[df['money_room']<1e+7]
-    df = df.loc[df['money_room']<1.5e+6]
+    df = df.loc[df['money_room']<1e+7]
+    # df = df.loc[df['money_room']<1.5e+6]
     return df
 
 def make_tmpdf():
@@ -63,19 +63,50 @@ def replace_values(df:pd.DataFrame) -> None:
     # diff = bcd - yb # 築年月とデータ登録日時の差
     # df.loc[diff<0, 'year_built'] = None # 築年月がデータ登録以前の欄はnanに
 
-def create_new_cols(df:pd.DataFrame) -> None:
-    # old_months
-    yb = np.array([s[:4]+'-'+s[4:6] if len(s)==8 else '' for s in df['year_built'].astype(str)], dtype=np.datetime64)   # length=3ならNaN、8なら年月
-    bmd = np.array(df['building_modify_date'], dtype=np.datetime64)
-    old_year = (bmd-yb).astype('timedelta64[Y]')
-    df['old_year'] = pd.Series(old_year, dtype=float)
+def create_new_cols(train, test) -> None:
+    for df in [train, test]:
+        # old_months
+        yb = np.array([s[:4]+'-'+s[4:6] if len(s)==8 else '' for s in df['year_built'].astype(str)], dtype=np.datetime64)   # length=3ならNaN、8なら年月
+        bmd = np.array(df['building_modify_date'], dtype=np.datetime64)
+        old_year = (bmd-yb).astype('timedelta64[Y]')
+        df['old_year'] = pd.Series(old_year, dtype=float)
 
-    # post
-    df['post'] = (df['post1']*10000 + df['post2'])
+        # post
+        df['post'] = (df['post1']*10000 + df['post2'])
 
-    # floor_plan_code
-    df['num_rooms'] = (df['floor_plan_code']//100).astype(np.float16)   # 部屋数
-    df['room_type'] = (df['floor_plan_code']%100).astype(np.float16)    # 部屋種別
+        # floor_plan_code
+        df['num_rooms'] = (df['floor_plan_code']//100).astype(np.float16)   # 部屋数
+        df['room_type'] = (df['floor_plan_code']%100).astype(np.float16)    # 部屋種別
+
+    # tag_ids
+    tag_dic = {
+        '223101': 'tag_ind_washbasin',
+        '310101': 'tag_autolock',
+        '230401': 'tag_kitchen_system',
+        '210201': 'tag_gas_pipe',
+        '210202': 'tag_gas_propane',
+        '320101': 'tag_elevator',
+        '220301': 'tag_bath_separate',
+        '220401': 'tag_bath_reheat',    #以上feature importance上位
+
+        '310501': 'tag_interphone',
+        '321101': 'tag_deliverybox',    # 中程度
+        
+        '293101': 'tag_furnished',
+        '260501': 'tag_internet',
+        '340401': 'tag_room_corner',
+        '321001': 'tag_park_bike',
+    }
+
+    tag_ids = pickle.load(open(config.tag_ids_train, 'rb'))
+    tmp = tag_ids[tag_dic.keys()]
+    train[list(tag_dic.values())] = tmp
+    
+    tag_ids = pickle.load(open(config.tag_ids_test, 'rb'))
+    tmp = tag_ids[tag_dic.keys()]
+    test[list(tag_dic.values())] = tmp
+    
+    return train, test
 
 def drop_cols(df:pd.DataFrame):
     cols = [
@@ -97,8 +128,7 @@ def process():
     replace_values(test_df)
 
     # 特徴量作成
-    create_new_cols(train_df)
-    create_new_cols(test_df)
+    train_df, test_df = create_new_cols(train_df, test_df)
 
     # 列削除
     train_df = drop_cols(train_df)
