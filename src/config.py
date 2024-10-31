@@ -13,6 +13,7 @@ tmp_dir = os.path.join(data_dir, 'tmp')
 
 raw_train = os.path.join(raw_dir, 'train.csv')
 raw_test = os.path.join(raw_dir, 'test.csv')
+tag_ids = os.path.join(tmp_dir, 'tag_ids.csv')
 tag_ids_train = os.path.join(tmp_dir, 'tag_ids_train.pkl')
 tag_ids_test = os.path.join(tmp_dir, 'tag_ids_test.pkl')
 

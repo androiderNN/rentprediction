@@ -26,6 +26,32 @@ def make_tmpdf():
 
     print('tmpfile created')
 
+def dump_tag_ids():
+    tmp_train = pickle.load(open(config.tmp_train_df, 'rb'))
+    tmp_test = pickle.load(open(config.tmp_test_df, 'rb'))
+
+    tag_ids = pd.read_csv(os.path.join(config.tag_ids))
+    ids = tag_ids['id'].astype(str)
+
+    # train
+    uti = tmp_train['unit_tag_id'].astype(str)
+    bti = tmp_train['building_tag_id'].astype(str)
+    sts = tmp_train['statuses'].astype(str)
+    ti = uti+bti+sts
+
+    tag_ids_array = pd.DataFrame(np.array([ti.str.count(tag) > 0 for tag in ids]).T, columns=ids, dtype=np.int8)
+    pickle.dump(tag_ids_array, open(config.tag_ids_train, 'wb'))
+
+    # test
+    uti = tmp_test['unit_tag_id'].astype(str)
+    bti = tmp_test['building_tag_id'].astype(str)
+    sts = tmp_test['statuses'].astype(str)
+    ti = uti+bti+sts
+
+    tag_ids_array = pd.DataFrame(np.array([ti.str.count(tag) > 0 for tag in ids]).T, columns=ids, dtype=np.int8)
+    pickle.dump(tag_ids_array, open(config.tag_ids_test, 'wb'))
+    print('tag_ids created')
+
 def target_encoding(train:pd.DataFrame, test, columns):
     train = train.reset_index(drop=True)
     test = test.reset_index(drop=True)
@@ -86,6 +112,8 @@ def create_new_cols(train, test) -> None:
         '210201': 'tag_gas_pipe',
         '210202': 'tag_gas_propane',
         '320101': 'tag_elevator',
+        '120101': 'tag_initial_fee',
+        '330501': 'tag_tile',
         '220301': 'tag_bath_separate',
         '220401': 'tag_bath_reheat',    #以上feature importance上位
 
@@ -101,11 +129,13 @@ def create_new_cols(train, test) -> None:
     tag_ids = pickle.load(open(config.tag_ids_train, 'rb'))
     tmp = tag_ids[tag_dic.keys()]
     train[list(tag_dic.values())] = tmp
+    # train = pd.concat([train, tag_ids], axis=1)
     
     tag_ids = pickle.load(open(config.tag_ids_test, 'rb'))
     tmp = tag_ids[tag_dic.keys()]
     test[list(tag_dic.values())] = tmp
-    
+    # test = pd.concat([test, tag_ids], axis=1)
+
     return train, test
 
 def drop_cols(df:pd.DataFrame):
@@ -144,5 +174,7 @@ def process():
     print('process succeed')
 
 if __name__ == '__main__':
-    # make_tmpdf()    # 一次ファイルの作成
+    # make_tmpdf()  # 一次ファイルの作成
+    # dump_tag_ids()  # tag_ids作成
+
     process()   # 特徴量作成
