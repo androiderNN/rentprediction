@@ -73,10 +73,15 @@ def create_new_cols(df:pd.DataFrame) -> None:
     # post
     df['post'] = (df['post1']*10000 + df['post2'])
 
+    # floor_plan_code
+    df['num_rooms'] = (df['floor_plan_code']//100).astype(np.float16)   # 部屋数
+    df['room_type'] = (df['floor_plan_code']%100).astype(np.float16)    # 部屋種別
+
 def drop_cols(df:pd.DataFrame):
     cols = [
         'year_built',   # old_yearで築年数を表したため不要と思われる
         'post1', 'post2',   # 結合してpostとした
+        'floor_plan_code',  # num_rooms, room_typeに分割
     ]
     return df.drop(columns=cols)
 
