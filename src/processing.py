@@ -143,7 +143,15 @@ def drop_cols(df:pd.DataFrame):
         'year_built',   # old_yearで築年数を表したため不要と思われる
         'post1', 'post2',   # 結合してpostとした
         'floor_plan_code',  # num_rooms, room_typeに分割
-    ]
+    ] + \
+    ['parking_distance', 'bank_distance', 'free_rent_duration', 'dwelling_unit_window_angle',
+    'management_form', 'building_land_area', 'land_kenpei', 'land_youseki', 'parking_number',
+    'park_distance', 'parking_money_tax', 'management_association_flg', 'land_area_kind',
+    'land_area_all', 'shopping_street_distance', 'flg_new', 'usable_status','money_kyoueki_tax',
+    'house_kanrinin', 'parking_keiyaku', 'genkyo_code', 'land_road_cond', 'land_setback_flg',
+    'building_area_kind', 'building_land_chimoku', 'flg_investment', 'flg_own', 'land_setback',
+    'land_chisei', 'building_status','flg_open']    # feature importance下位
+
     return df.drop(columns=cols)
 
 def process():
