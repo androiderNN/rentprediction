@@ -145,6 +145,8 @@ class rentregressor():
             'model_type': str,
             'use_log': bool,
         }'''
+        self.params = params
+
         # targetの対数設定
         self.use_log = params['use_log']
 
@@ -174,7 +176,6 @@ class rentregressor():
     def main(self):
         # データのロードと分割
         train_df = pickle.load(open(config.train_df, 'rb'))
-        test_df = pickle.load(open(config.test_df, 'rb'))
 
         tr_x = train_df.drop(columns=config.target_name)
         tr_y = train_df[config.target_name]
@@ -191,6 +192,8 @@ class rentregressor():
                 os.mkdir(self.exdir)
 
                 # 予測
+                test_df = pickle.load(open(config.test_df, 'rb'))
+
                 train_pred = self.trainer.predict(tr_x)
                 test_pred = self.trainer.predict(test_df.drop(columns='index'))
 
@@ -198,13 +201,16 @@ class rentregressor():
                     train_pred = np.exp(train_pred)
                     test_pred = np.exp(test_pred)
 
-                self.export(test_df['index'], test_pred)
+                self.export(test_df['index'], test_pred)    # 投稿ファイル
 
                 train_df['pred'] = train_pred
                 test_df['pred'] = test_pred
 
                 train_df.to_csv(os.path.join(self.exdir, 'train_pred.csv'))
                 test_df.to_csv(os.path.join(self.exdir, 'test_pred.csv'))
+
+                # パラメータ
+                pickle.dump(self.params, open(os.path.join(self.exdir, 'params.pkl'), 'wb'))
 
                 # supplements
                 supplements = self.trainer.get_supplements()

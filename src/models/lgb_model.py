@@ -25,7 +25,7 @@ class modeler_lgb():
             num_boost_round=self.num_boost_round,
             valid_sets=es_lgb,
             valid_names='estop',
-            callbacks=[lgb.early_stopping(stopping_rounds=3, verbose=True)]
+            callbacks=[lgb.early_stopping(stopping_rounds=2, verbose=True)]
         )
 
     def predict(self, x):
