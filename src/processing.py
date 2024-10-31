@@ -5,7 +5,8 @@ import pandas as pd
 import config
 
 def train_clearance(df):
-    df = df.loc[df['money_room']<1e+7]
+    # df = df.loc[df['money_room']<1e+7]
+    df = df.loc[df['money_room']<1.5e+6]
     return df
 
 def make_tmpdf():
@@ -69,9 +70,13 @@ def create_new_cols(df:pd.DataFrame) -> None:
     old_year = (bmd-yb).astype('timedelta64[Y]')
     df['old_year'] = pd.Series(old_year, dtype=float)
 
+    # post
+    df['post'] = (df['post1'].astype(str) + df['post2'].astype(str)).astype(int)
+
 def drop_cols(df:pd.DataFrame):
     cols = [
-        'year_built'    # old_yearで築年数を表したため不要と思われる
+        'year_built',   # old_yearで築年数を表したため不要と思われる
+        'post1', 'post2',   # 結合してpostとした
     ]
     return df.drop(columns=cols)
 
@@ -104,5 +109,5 @@ def process():
     print('process succeed')
 
 if __name__ == '__main__':
-    make_tmpdf()    # 一次ファイルの作成
+    # make_tmpdf()    # 一次ファイルの作成
     process()   # 特徴量作成
