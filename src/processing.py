@@ -71,7 +71,7 @@ def create_new_cols(df:pd.DataFrame) -> None:
     df['old_year'] = pd.Series(old_year, dtype=float)
 
     # post
-    df['post'] = (df['post1'].astype(str) + df['post2'].astype(str)).astype(int)
+    df['post'] = (df['post1']*10000 + df['post2'])
 
 def drop_cols(df:pd.DataFrame):
     cols = [
