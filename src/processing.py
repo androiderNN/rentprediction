@@ -17,6 +17,9 @@ def make_tmpdf():
     train_df = pd.read_csv(config.raw_train, usecols=lambda x: x not in config.ignore_cols, dtype=config.df_dtype)
     test_df = pd.read_csv(config.raw_test, usecols=lambda x: x not in config.ignore_cols, dtype=config.df_dtype)
 
+    # index作成
+    train_df['index'] = [i for i in range(train_df.shape[0])]
+
     # 異常値の削除
     train_df = train_clearance(train_df)
 

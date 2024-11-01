@@ -177,7 +177,7 @@ class rentregressor():
         # データのロードと分割
         train_df = pickle.load(open(config.train_df, 'rb'))
 
-        tr_x = train_df.drop(columns=config.target_name)
+        tr_x = train_df.drop(columns=[config.target_name, 'index'])
         tr_y = train_df[config.target_name]
 
         if self.use_log:
@@ -207,11 +207,11 @@ class rentregressor():
                 train_df['pred'] = train_pred
                 test_df['pred'] = test_pred
                 
-                cols = ['room_floor', 'unit_area']
-                train_df[['money_room']+cols].to_csv(os.path.join(self.exdir, 'train_pred.csv'))
-                test_df[['index', 'pred']+cols].to_csv(os.path.join(self.exdir, 'test_pred.csv'))
+                cols = ['pred', 'index', 'room_floor', 'unit_area']
+                train_df[['money_room']+cols].to_csv(os.path.join(self.exdir, 'train_pred.csv'), index=False)
+                test_df[cols].to_csv(os.path.join(self.exdir, 'test_pred.csv'), index=False)
 
-                test_df = test_df[['index', 'pred']+cols]
+                test_df = test_df[cols]
                 tmp = pd.read_csv(config.raw_test, usecols=['index', 'building_id'])
                 test_df = pd.merge(test_df, tmp, on='index')  # model用データはbuilding_idがdropしているのでindexをキーに生データから結合
 
