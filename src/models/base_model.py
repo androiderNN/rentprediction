@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import mean_squared_error
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import config
+import config, post_processing
 
 now = datetime.datetime.now()
 time = now.strftime('%m%d-%H:%M:%S')
@@ -18,6 +18,13 @@ def log_rmse(truth, pred):
     truth = np.exp(truth)
     pred = np.exp(pred)
     return root_mean_squared_error(truth, pred)
+
+def export(exdir, df, filename='submission.csv'):
+    df = pd.DataFrame({
+        'index': df['index'],
+        'money_room': df['pred']
+    })
+    df.to_csv(os.path.join(exdir, filename), index=False, header=False)
 
 class trainer_holdout():
     def __init__(self, params):
@@ -166,13 +173,6 @@ class rentregressor():
         self.model_type = params['model_type']
         self.exdir = os.path.join(config.ex_dir, time+'_'+self.model_type)
 
-    def export(self, index, test_pred):
-        df = pd.DataFrame({
-            'index': index,
-            'money_room': test_pred
-        })
-        df.to_csv(os.path.join(self.exdir, 'submission.csv'), index=False, header=False)
-
     def main(self):
         # データのロードと分割
         train_df = pickle.load(open(config.train_df, 'rb'))
@@ -201,13 +201,22 @@ class rentregressor():
                     train_pred = np.exp(train_pred)
                     test_pred = np.exp(test_pred)
 
-                self.export(test_df['index'], test_pred)    # 投稿ファイル
+                test_df['pred'] = test_pred
+                export(self.exdir, test_df) # 投稿ファイル
 
                 train_df['pred'] = train_pred
                 test_df['pred'] = test_pred
+                
+                cols = ['room_floor', 'unit_area']
+                train_df[['money_room']+cols].to_csv(os.path.join(self.exdir, 'train_pred.csv'))
+                test_df[['index', 'pred']+cols].to_csv(os.path.join(self.exdir, 'test_pred.csv'))
 
-                train_df.to_csv(os.path.join(self.exdir, 'train_pred.csv'))
-                test_df.to_csv(os.path.join(self.exdir, 'test_pred.csv'))
+                test_df = test_df[['index', 'pred']+cols]
+                tmp = pd.read_csv(config.raw_test, usecols=['index', 'building_id'])
+                test_df = pd.merge(test_df, tmp, on='index')  # model用データはbuilding_idがdropしているのでindexをキーに生データから結合
+
+                test_df = post_processing.fill_by_unittype(test_df)
+                export(self.exdir, test_df, 'filled_submission.csv')
 
                 # パラメータ
                 pickle.dump(self.params, open(os.path.join(self.exdir, 'params.pkl'), 'wb'))
