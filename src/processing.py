@@ -42,7 +42,8 @@ def dump_tag_ids():
     sts = tmp_train['statuses'].astype(str)
     ti = uti+bti+sts
 
-    tag_ids_array = pd.DataFrame(np.array([ti.str.count(tag) > 0 for tag in ids]).T, columns=ids, dtype=np.int8)
+    tag_ids_array = pd.DataFrame(np.array(ti.map(lambda x: [tag in x for tag in ids]).tolist()), columns=ids, dtype=np.int8)
+    tag_ids_array['index'] = tmp_train['index']
     pickle.dump(tag_ids_array, open(config.tag_ids_train, 'wb'))
 
     # test
@@ -51,7 +52,8 @@ def dump_tag_ids():
     sts = tmp_test['statuses'].astype(str)
     ti = uti+bti+sts
 
-    tag_ids_array = pd.DataFrame(np.array([ti.str.count(tag) > 0 for tag in ids]).T, columns=ids, dtype=np.int8)
+    tag_ids_array = pd.DataFrame(np.array(ti.map(lambda x: [tag in x for tag in ids]).tolist()), columns=ids, dtype=np.int8)
+    tag_ids_array['index'] = tmp_test['index']
     pickle.dump(tag_ids_array, open(config.tag_ids_test, 'wb'))
     print('tag_ids created')
 
@@ -92,7 +94,7 @@ def replace_values(df:pd.DataFrame) -> None:
     # diff = bcd - yb # 築年月とデータ登録日時の差
     # df.loc[diff<0, 'year_built'] = None # 築年月がデータ登録以前の欄はnanに
 
-def create_new_cols(train, test) -> None:
+def create_new_cols(train, test):
     for df in [train, test]:
         # old_months
         yb = np.array([s[:4]+'-'+s[4:6] if len(s)==8 else '' for s in df['year_built'].astype(str)], dtype=np.datetime64)   # length=3ならNaN、8なら年月
@@ -119,10 +121,8 @@ def create_new_cols(train, test) -> None:
         '330501': 'tag_tile',
         '220301': 'tag_bath_separate',
         '220401': 'tag_bath_reheat',    #以上feature importance上位
-
         '310501': 'tag_interphone',
         '321101': 'tag_deliverybox',    # 中程度
-        
         '293101': 'tag_furnished',
         '260501': 'tag_internet',
         '340401': 'tag_room_corner',
@@ -130,13 +130,15 @@ def create_new_cols(train, test) -> None:
     }
 
     tag_ids = pickle.load(open(config.tag_ids_train, 'rb'))
-    tmp = tag_ids[tag_dic.keys()]
-    train[list(tag_dic.values())] = tmp
+    tmp = tag_ids[list(tag_dic.keys()) + ['index']]
+    train = pd.merge(train, tmp, on='index', how='left')
+    train = train.rename(columns=tag_dic)   # 列名変更
     # train = pd.concat([train, tag_ids], axis=1)
     
     tag_ids = pickle.load(open(config.tag_ids_test, 'rb'))
-    tmp = tag_ids[tag_dic.keys()]
-    test[list(tag_dic.values())] = tmp
+    tmp = tag_ids[list(tag_dic.keys()) + ['index']]
+    test = pd.merge(test, tmp, on='index', how='left')
+    test = test.rename(columns=tag_dic)
     # test = pd.concat([test, tag_ids], axis=1)
 
     return train, test
@@ -181,11 +183,11 @@ def process():
 
     pickle.dump(train_df, open(config.train_df, 'wb'))
     pickle.dump(test_df, open(config.test_df, 'wb'))
-    pickle.dump([c for c in train_df.columns.tolist() if c!=config.target_name], open(config.df_cols, 'wb'))
+    pickle.dump([c for c in train_df.columns.tolist() if c not in [config.target_name, 'index']], open(config.df_cols, 'wb'))
     print('process succeed')
 
 if __name__ == '__main__':
     # make_tmpdf()  # 一次ファイルの作成
-    # dump_tag_ids()  # tag_ids作成
+    dump_tag_ids()  # tag_ids作成
 
     process()   # 特徴量作成
