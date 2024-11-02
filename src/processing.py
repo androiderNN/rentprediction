@@ -23,6 +23,9 @@ def make_tmpdf():
     # 異常値の削除
     train_df = train_clearance(train_df)
 
+    train_df.reset_index(drop=True, inplace=True)
+    test_df.reset_index(drop=True, inplace=True)
+
     pickle.dump(train_df, open(config.tmp_train_df, 'wb'))
     pickle.dump(test_df, open(config.tmp_test_df, 'wb'))
     del train_df, test_df
@@ -43,7 +46,7 @@ def dump_tag_ids():
     ti = uti+bti+sts
 
     tag_ids_array = pd.DataFrame(np.array(ti.map(lambda x: [tag in x for tag in ids]).tolist()), columns=ids, dtype=np.int8)
-    tag_ids_array['index'] = tmp_train['index']
+    tag_ids_array['index'] = tmp_train['index'].tolist()
     pickle.dump(tag_ids_array, open(config.tag_ids_train, 'wb'))
 
     # test
@@ -53,8 +56,9 @@ def dump_tag_ids():
     ti = uti+bti+sts
 
     tag_ids_array = pd.DataFrame(np.array(ti.map(lambda x: [tag in x for tag in ids]).tolist()), columns=ids, dtype=np.int8)
-    tag_ids_array['index'] = tmp_test['index']
+    tag_ids_array['index'] = tmp_test['index'].tolist()
     pickle.dump(tag_ids_array, open(config.tag_ids_test, 'wb'))
+
     print('tag_ids created')
 
 def target_encoding(train:pd.DataFrame, test, columns):
@@ -95,6 +99,8 @@ def replace_values(df:pd.DataFrame) -> None:
     # df.loc[diff<0, 'year_built'] = None # 築年月がデータ登録以前の欄はnanに
 
 def create_new_cols(train, test):
+    '''
+    特徴量作成'''
     for df in [train, test]:
         # old_months
         yb = np.array([s[:4]+'-'+s[4:6] if len(s)==8 else '' for s in df['year_built'].astype(str)], dtype=np.datetime64)   # length=3ならNaN、8なら年月
@@ -180,6 +186,9 @@ def process():
     # dtypeで抽出
     train_df = train_df.select_dtypes(include='number')
     test_df = test_df.select_dtypes(include='number')
+
+    train_df.reset_index(drop=True, inplace=True)
+    test_df.reset_index(drop=True, inplace=True)
 
     pickle.dump(train_df, open(config.train_df, 'wb'))
     pickle.dump(test_df, open(config.test_df, 'wb'))
